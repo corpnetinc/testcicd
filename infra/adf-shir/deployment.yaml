@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: adf-shir
+spec:
+    selector:
+        matchLabels:
+            app: adf-shir
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: adf-shir
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            -   matchExpressions:
+                                    -   key: kubernetes.io/os
+                                        operator: In
+                                        values:
+                                            - windows
+            containers:
+                - name: adf-shir
+                  image: corpnet.azurecr.io/infra/adf-shir:latest
+                  env:
+                      - name: AUTH_KEY
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: auth_key
+                      - name: TENANT_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: tenant_id
+                      - name: CLIENT_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: client_id
+                      - name: CLIENT_SECRET
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: client_secret
+                      - name: SUBSCRIPTION_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: subscription_id
+                      - name: RESOURCE_GROUP_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: resource_group_name
+                      - name: DATA_FACTORY_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: data_factory_name
+                      - name: INTEGRATION_RUNTIME_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: adf-shir-k8s-config
+                                key: integration_runtime_name
+                      - name: ENABLE_HA
+                        value: "true"
+                  livenessProbe:
+                      exec:
+                          command:
+                              - powershell
+                              - C:/SHIR/health-check.ps1
+                      initialDelaySeconds: 120
+                      periodSeconds: 120
+                  lifecycle:
+                      preStop:
+                          exec:
+                              command:
+                                  - powershell
+                                  - C:/SHIR/cleanup.ps1
+                  resources:
+                      requests:
+                          memory: "256Mi"
+                          cpu: "0.1"
+                      limits:
+                          cpu: "2"
+                  args:
+                      - -cpus
+                      - "2"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+    name: adf-shir-hpa
+spec:
+    scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: adf-shir
+    minReplicas: 1
+    maxReplicas: 4
+    behavior:
+        scaleUp:
+            stabilizationWindowSeconds: 300
+        scaleDown:
+            stabilizationWindowSeconds: 5
+    metrics:
+        - type: Resource
+          resource:
+              name: cpu
+              target:
+                  type: Utilization
+                  averageUtilization: 75

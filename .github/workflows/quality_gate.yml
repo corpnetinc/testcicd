@@ -1,0 +1,29 @@
+name: Quality Gate
+
+on:
+    workflow_call:
+
+jobs:
+    quality_gate:
+        name: Quality Gate
+        runs-on: aloha-dev
+        steps:
+            -   name: Checkout code
+                uses: actions/checkout@v1
+                with:
+                    fetch-depth: 0
+            -   name: Install dependencies
+                id: prepare
+                uses: ./.github/actions/prepare
+            -   name: Run linter
+                run: |
+                    npm run lint
+            -   name: Run unit tests
+                run: |
+                    npm run test:unit
+            -   name: Save node_modules cache
+                uses: actions/cache/save@v3
+                if: steps.prepare.outputs.cache-hit != 'true'
+                with:
+                    path: node_modules
+                    key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
