@@ -1,0 +1,29 @@
+name: Check, Build and Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        type: environment
+        required: true
+  pull_request:
+    branches:
+      - main
+      - WIP
+    types:
+      - closed
+
+jobs:
+  check:
+    steps:
+      -   name: Select deployment environment
+          id: branch_check
+          run: |
+            echo "Running on branch ${{ github.ref }}"
+            if [ "${{ inputs.environment }}" != "" ]; then
+                echo "env_name=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            elif [ "${{ github.ref }}" == "main" ]; then
+                echo "env_name=Production" >> $GITHUB_OUTPUT
+            elif [ "${{ github.ref }}" == "WIP" ]; then
+                echo "env_name=Development" >> $GITHUB_OUTPUT
+            fi
