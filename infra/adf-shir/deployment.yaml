@@ -19,8 +19,7 @@ spec:
                             -   matchExpressions:
                                     -   key: kubernetes.io/os
                                         operator: In
-                                        values:
-                                            - windows
+                                        values: [ "windows" ]
             containers:
                 - name: adf-shir
                   image: corpnet.azurecr.io/infra/adf-shir:latest
@@ -69,26 +68,20 @@ spec:
                         value: "true"
                   livenessProbe:
                       exec:
-                          command:
-                              - powershell
-                              - C:/SHIR/health-check.ps1
+                          command: [ "powershell", "C:/SHIR/health-check.ps1" ]
                       initialDelaySeconds: 120
                       periodSeconds: 120
                   lifecycle:
                       preStop:
                           exec:
-                              command:
-                                  - powershell
-                                  - C:/SHIR/cleanup.ps1
+                              command: [ "powershell", "C:/SHIR/cleanup.ps1" ]
                   resources:
                       requests:
                           memory: "256Mi"
                           cpu: "0.1"
                       limits:
                           cpu: "2"
-                  args:
-                      - -cpus
-                      - "2"
+                  args: [ "-cpus", "2" ]
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

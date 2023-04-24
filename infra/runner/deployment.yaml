@@ -19,8 +19,7 @@ spec:
                             -   matchExpressions:
                                     -   key: kubernetes.io/os
                                         operator: In
-                                        values:
-                                            - linux
+                                        values: [ "linux" ]
             containers:
                 -   name: runner
                     image: corpnet.azurecr.io/infra/github-runner:latest
@@ -46,22 +45,16 @@ spec:
                                     name: runner-k8s-config
                                     key: runner_labels
                         -   name: DOCKER_HOST
-                            value: tcp://localhost:2375
+                            value: tcp://127.0.0.1:2375
                     livenessProbe:
                         exec:
-                            command:
-                                - /bin/bash
-                                - -c
-                                - ./health-check.sh
+                            command: [ "/bin/bash", "-c", "./health-check.sh" ]
                         initialDelaySeconds: 30
                         periodSeconds: 120
                     lifecycle:
                         preStop:
                             exec:
-                                command:
-                                    - /bin/bash
-                                    - -c
-                                    - ./cleanup.sh
+                                command: [ "/bin/bash", "-c", "./cleanup.sh" ]
                     resources:
                         requests:
                             memory: "256Mi"
@@ -75,11 +68,12 @@ spec:
                 -   name: dind
                     image: docker:dind
                     command: [ "dockerd", "--host", "tcp://127.0.0.1:2375" ]
+                    env:
+                        -   name: DOCKER_HOST
+                            value: "tcp://127.0.0.1:2375"
                     livenessProbe:
                         exec:
-                            command:
-                                - docker
-                                - info
+                            command: [ "docker", "info" ]
                         initialDelaySeconds: 60
                         periodSeconds: 10
                     resources:
