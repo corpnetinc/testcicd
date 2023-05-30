@@ -11,6 +11,7 @@ jobs:
 
       - name: Test cache
         uses: actions/cache@v3
+        if: github.ref_name != 'main'
         with:
           path: './README.md'
           key: stack
