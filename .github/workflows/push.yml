@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Exec
+        env:
+          GITHUB_REF: ${{ github.event.ref }}
         run: |
-          echo '${{ toJSON(github) }}'
-          printenv
+          export STACK_NAME="dev-$(echo ${GITHUB_REF##*/} | sed 's/[^0-9]*//g')" 
+          echo "${STACK_NAME}"
