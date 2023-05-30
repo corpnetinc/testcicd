@@ -8,7 +8,7 @@ jobs:
     steps:
       - name: Exec
         env:
-          GITHUB_REF: ${{ github.event.ref }}
+          GITHUB_EVENT_REF: ${{ github.event.ref }}
         run: |
-          export STACK_NAME="dev-$(echo ${GITHUB_REF##*/} | sed 's/[^0-9]*//g')" 
+          export STACK_NAME="dev-$(echo ${GITHUB_EVENT_REF##*/} | sed 's/[^0-9]*//g')" 
           echo "${STACK_NAME}"
