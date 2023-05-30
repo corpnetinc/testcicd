@@ -1,9 +1,9 @@
-name: Cleanup
+name: Pulumi Deploy
 on:
-  delete
+  push:
 jobs:
-  cleanup:
-    name: Cleanup
+  update:
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Exec
