@@ -1,0 +1,11 @@
+name: Cleanup
+on:
+  delete
+jobs:
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exec
+        run: |
+          echo '${{ toJSON(github) }}'
