@@ -15,3 +15,10 @@ jobs:
           GITHUB_EVENT_REF: ${{ github.event.ref }}
         run: |
           echo '${{ toJSON(github) }}'
+
+      - name: Test cache
+        uses: actions/cache@v3
+        if: github.ref_name != 'main'
+        with:
+          path: './README.md'
+          key: stack
