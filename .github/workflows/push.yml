@@ -2,22 +2,48 @@ name: Pulumi Deploy
 on:
   push:
 jobs:
-  update:
-    name: Deploy
+  job1:
+    name: Job 1
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+    steps:
+      - name: Test
+        run: echo "Job 1"
+
+  job2:
+    name: Job 2
+    needs: [job1]
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Test
+        run: echo "Job 2"
 
-      - name: Test cache
-        uses: actions/cache@v3
-        if: github.ref_name != 'main'
-        with:
-          path: './README.md'
-          key: stack
+  job3:
+    name: Job 3
+    needs: [job2]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: echo "Job 3"
 
-      - name: Exec
-        env:
-          GITHUB_EVENT_REF: ${{ github.event.ref }}
-        run: |
-          ls -la
+#
+#  update:
+#    name: Deploy
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Test cache
+#        uses: actions/cache@v3
+#        if: github.ref_name != 'main'
+#        with:
+#          path: './README.md'
+#          key: stack
+#
+#      - name: Exec
+#        env:
+#          GITHUB_EVENT_REF: ${{ github.event.ref }}
+#        run: |
+#          ls -la
