@@ -6,8 +6,20 @@ on:
 jobs:
     quality_gate:
         name: Quality Gate
-        runs-on: aloha-dev
+        runs-on: arc-runner-set
         steps:
+            -   name: Prepare runner
+                run: |
+                    sudo apt-get update -y
+                    sudo apt-get install -y --no-install-recommends ca-certificates curl apt-transport-https lsb-release gnupg
+                    curl -sL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+                    echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/azure-cli.list
+                    sudo apt-get update -y
+                    sudo apt-get install -y --no-install-recommends azure-cli
+                    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo bash -
+                    sudo apt-get install -y --no-install-recommends nodejs
+                    sudo rm -rf /var/lib/apt/lists/*
+                    curl -fsSL https://get.pulumi.com | sh
             -   name: Checkout code
                 uses: actions/checkout@v1
                 with:
