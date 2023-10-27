@@ -15,6 +15,4 @@ runs:
                 key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
         -   name: Install dependencies
             if: steps.cache.outputs.cache-hit != 'true'
-            uses: ./.github/actions/node
-            with:
-                run: npm ci
+            run: npm ci

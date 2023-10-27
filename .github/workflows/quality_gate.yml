@@ -27,15 +27,11 @@ jobs:
                 id: prepare
                 uses: ./.github/actions/prepare
             -   name: Run linter
-                uses: ./.github/actions/node
-                with:
-                    run: |
-                        npm run lint
+                run: |
+                    npm run lint
             -   name: Run unit tests
-                uses: ./.github/actions/node
-                with:
-                    run: |
-                        npm run test:unit
+                run: |
+                    npm run test:unit
             -   name: Save node_modules cache
                 uses: actions/cache/save@v3
                 if: steps.prepare.outputs.cache-hit != 'true'
