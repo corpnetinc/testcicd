@@ -1,0 +1,9 @@
+name: Docker run
+description: Run commands in app container
+inputs:
+    run:
+        description: 'Run command in container'
+        required: true
+runs:
+    using: 'docker'
+    image: 'Dockerfile'

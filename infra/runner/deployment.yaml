@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: runner
+spec:
+    selector:
+        matchLabels:
+            app: runner
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: runner
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            -   matchExpressions:
+                                    -   key: kubernetes.io/os
+                                        operator: In
+                                        values: [ "linux" ]
+            containers:
+                -   name: runner
+                    image: corpnet.azurecr.io/infra/github-runner:latest
+                    env:
+                        -   name: GITHUB_TOKEN
+                            valueFrom:
+                                secretKeyRef:
+                                    name: runner-k8s-config
+                                    key: gh_token
+                        -   name: REPO_OWNER
+                            valueFrom:
+                                secretKeyRef:
+                                    name: runner-k8s-config
+                                    key: repo_owner
+                        -   name: REPO_NAME
+                            valueFrom:
+                                secretKeyRef:
+                                    name: runner-k8s-config
+                                    key: repo_name
+                        -   name: RUNNER_LABELS
+                            valueFrom:
+                                secretKeyRef:
+                                    name: runner-k8s-config
+                                    key: runner_labels
+                        -   name: DOCKER_HOST
+                            value: tcp://127.0.0.1:2375
+                    livenessProbe:
+                        exec:
+                            command: [ "/bin/bash", "-c", "./health-check.sh" ]
+                        initialDelaySeconds: 30
+                        periodSeconds: 120
+                    lifecycle:
+                        preStop:
+                            exec:
+                                command: [ "/bin/bash", "-c", "./cleanup.sh" ]
+                    resources:
+                        requests:
+                            memory: "256Mi"
+                            cpu: "0.1"
+                        limits:
+                            memory: "768Mi"
+                            cpu: "1"
+                    volumeMounts:
+                        -   name: github-storage
+                            mountPath: /tmp
+                -   name: dind
+                    image: docker:dind
+                    command: [ "dockerd", "--host", "tcp://127.0.0.1:2375" ]
+                    env:
+                        -   name: DOCKER_HOST
+                            value: "tcp://127.0.0.1:2375"
+                    livenessProbe:
+                        exec:
+                            command: [ "docker", "info" ]
+                        initialDelaySeconds: 60
+                        periodSeconds: 10
+                    resources:
+                        requests:
+                            memory: "256Mi"
+                            cpu: "0.1"
+                        limits:
+                            memory: "768Mi"
+                            cpu: "1"
+                    securityContext:
+                        privileged: true
+                    volumeMounts:
+                        -   name: dind-storage
+                            mountPath: /var/lib/docker
+                        -   name: github-storage
+                            mountPath: /tmp
+            volumes:
+                -   name: github-storage
+                    emptyDir: { }
+                -   name: dind-storage
+                    emptyDir: { }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+    name: runner-hpa
+spec:
+    scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: runner
+    minReplicas: 1
+    maxReplicas: 5
+    behavior:
+        scaleDown:
+            stabilizationWindowSeconds: 5
+    metrics:
+        -   type: Resource
+            resource:
+                name: cpu
+                target:
+                    type: Utilization
+                    averageUtilization: 75
